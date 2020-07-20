@@ -1,0 +1,3 @@
+[submodule "neon/client"]
+	path = neon/client
+	url = https://github.com/urizen1921/neon-lights.git
