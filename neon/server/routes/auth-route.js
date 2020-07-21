@@ -13,10 +13,16 @@ const {
 //Load Controllers
 const { 
   registerController,
-  activationController 
+  activationController,
+  loginController,
+  forgetController 
 } = require('../controllers/auth-controller.js');
 
+const { validationResult } = require('express-validator');
+
 router.post('/register', validRegister, registerController);
+router.post('/login', validLogin, loginController);
 router.post('/activation', activationController);
+router.put('/password/forget', forgotPasswordValidator, forgetController);
 
 module.exports = router;
