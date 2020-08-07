@@ -7,7 +7,6 @@ const fetch = require('node-fetch');
 
 const { validationResult } = require('express-validator');
 const jwt = require('jsonwebtoken');
-const expressJWT = require('express-jwt');
 
 //Custom error handler to get useful error from database errors
 const { errorHandler } = require('../helpers/dbErrorHandling.js');
@@ -125,51 +124,51 @@ exports.activationController = (req, res) => {
           });
         }
       });
-  } else {
-    return res.json({
-      message: 'error, please try again'
-    });
-  }
+    } else {
+      return res.json({
+        message: 'error, please try again'
+      });
+    }
 };
-
+  
 exports.loginController = (req, res) => {
 
-  const { email, password } = req.body;
-  const errors = validationResult(req);
+const { email, password } = req.body;
+const errors = validationResult(req);
 
-  if(!errors.isEmpty()) {
-    const firstError = errors.array().map(error => error.msg)[0];
-    return res.status(422).json({
-      error: firstError
-    });
-  } else {
-    //Check if user exists
-    User.findOne({
-      email
-    }).exec((err, user) => {
-      if(err || !user) {
-        return res.status(400).json({
-          error: 'User with that email doesn\'t exist. Please Sign up.'
-        });
-      }
-
-      // Authenticate
-      if(!user.authenticate(password)) {
-        return res.status(400).json({
-          error: 'Email and password don\'t match'
-        });
-      }
+if(!errors.isEmpty()) {
+  const firstError = errors.array().map(error => error.msg)[0];
+  return res.status(422).json({
+    error: firstError
+  });
+} else {
+  //Check if user exists
+  User.findOne({
+    email
+  }).exec((err, user) => {
+    if(err || !user) {
+      return res.status(400).json({
+        error: 'User with that email doesn\'t exist. Please Sign up.'
+      });
+    }
     
-      //Generate token
-      const token = jwt.sign(
-        {
-          _id: user._id
-        }, process.env.JWT_SECRET,
-        {
-          expiresIn: '1m'
-        }
+    // Authenticate
+    if(!user.authenticate(password)) {
+      return res.status(400).json({
+        error: 'Email and password don\'t match'
+      });
+    }
+    
+    //Generate token
+    const token = jwt.sign(
+      {
+        _id: user._id
+      }, process.env.JWT_SECRET,
+      {
+        expiresIn: '7d'
+      }
       );
-    
+      
       const {_id, name, email, role } = user;
       return res.json({
         token,
@@ -182,10 +181,15 @@ exports.loginController = (req, res) => {
       });
     });
   }
-}
+};
+    
+exports.requireSignin = expressJwt({
+  secret: process.env.JWT_SECRET, //req.user._id
+  algorithms: ['HS256']
+});
 
 exports.forgetController = (req, res) => {
-
+  
   const { email } = req.body;
   const errors = validationResult(req);
 
@@ -248,7 +252,7 @@ exports.forgetController = (req, res) => {
       });
     });
   }
-
+  
 }
 
 exports.resetController = (req, res) => {
@@ -289,7 +293,7 @@ exports.resetController = (req, res) => {
             user.save((err, result) => {
               if(err) {
                 return res.status(400).json({
-                  error: 'Error reseting user password'
+                  error: 'Error resetting user password'
                 });
               }
 
@@ -303,4 +307,27 @@ exports.resetController = (req, res) => {
   }
 
 }
+
+
+exports.adminMiddleware = (req, res, next) => {
+  User.findById({
+    _id: req.user._id
+  }).exec((err, user) => {
+    if(err || !user) {
+      return res.status(400).json({
+        error: 'User not found'
+      });
+    }
+
+    if(user.role != 'admin') {
+      return res.status(400).json({
+        error: 'Admin resource. Access denied.'
+      });
+    }
+
+    req.profile = user;
+    next();
+  });
+}
+
 

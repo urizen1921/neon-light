@@ -34,10 +34,12 @@ if(process.env.NODE_ENV === 'development') {
 //Load all routes
 
 const authRouter = require('./routes/auth-route.js');
+const userRouter = require('./routes/user-route.js');
 
 
 //Use Routes
 app.use('/api/', authRouter);
+app.use('/api/', userRouter);
 
 app.use((req, res, next) => {
   res.status(404).json({

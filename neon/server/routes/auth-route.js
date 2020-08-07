@@ -16,7 +16,7 @@ const {
   activationController,
   loginController,
   forgetController,
-  resetController 
+  resetController
 } = require('../controllers/auth-controller.js');
 
 const { validationResult } = require('express-validator');
@@ -26,5 +26,7 @@ router.post('/login', validLogin, loginController);
 router.post('/activation', activationController);
 router.put('/password/forget', forgotPasswordValidator, forgetController);
 router.put('/password/reset', resetPasswordValidator, resetController);
+
+
 
 module.exports = router;
